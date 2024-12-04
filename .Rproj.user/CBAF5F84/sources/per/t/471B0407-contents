@@ -1,0 +1,341 @@
+---
+title: "envmodels"
+output: html_document
+date: "2024-12-04"
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r}
+# load packages and data
+library(tidyverse)
+library(zoo)
+library(glmmTMB) 
+library(DHARMa)
+library(performance) #vifs 
+library(ggeffects) #partial effects
+library(patchwork) #plotting
+library(scales)
+library(car)
+
+data <- read.csv("datasets/set.csv") %>%
+  dplyr::select(where(~ !is.numeric(.) || is.numeric(.) &&
+                 sum(., na.rm = T) > 0)) %>%
+    mutate(across(where(is.numeric), ~ na.approx(.,
+                                               na.rm = F,
+                                               rule = 2)))
+```
+
+```{r}
+# larval fish models 
+
+#Trachurus novaezelandiae
+yak <- glmmTMB(Trachurus.novaezelandiae ~ poly(CTDSST_degC,2,raw=TRUE) +
+                    CTDChlaSurf_mgm3 + CTDSalinity_psu + GSLA + Biomass_mgm3 +
+                    Paracalanus.indicus +
+                    Temora.turbinata + Oithona.nana + Clausocalanus.pergens,
+                   family = nbinom1,
+                   offset = log(Volume_m3),
+                   data = data)
+
+yak %>% check_collinearity()
+yak %>% check_zeroinflation()
+yak %>% simulateResiduals %>% plot
+yak %>% summary
+
+#Sardinops sagax
+sar <- glmmTMB(Sardinops.sagax ~ poly(CTDSST_degC,2,raw=TRUE) + GSLA +
+                    CTDChlaSurf_mgm3 + CTDSalinity_psu + Biomass_mgm3 +
+                     Acartia.tranteri + Clausocalanus.furcatus +
+                    Ctenocalanus.vanus + Microsetella.rosea +
+                    Microsetella.norvegica + Temora.turbinata +
+                    Paracalanus.indicus + Acartia.tranteri +
+                    Clausocalanus.furcatus + Euterpina.acutifrons,
+                   family = nbinom2,
+                   offset = log(Volume_m3),
+                   data = data)
+
+sar %>% check_collinearity()
+sar %>% check_zeroinflation()
+sar %>% simulateResiduals %>% plot
+sar %>% summary
+
+#Engraulis australis
+anch <- glmmTMB(Engraulis.australis ~ poly(CTDSST_degC,2,raw=TRUE) + GSLA +
+                    CTDChlaSurf_mgm3 + CTDSalinity_psu + Biomass_mgm3 +
+                     Oithona.nana + Microsetella.norvegica + Euterpina.acutifrons +
+                     Oithona.plumifera + Parvocalanus.crassirostris +
+                     Paracalanus.indicus + Clausocalanus.furcatus +
+                     Temora.turbinata,
+                   family = nbinom1,
+                   offset = log(Volume_m3),
+                   data = data)
+
+anch %>% check_collinearity()
+anch %>% check_zeroinflation()
+anch %>% simulateResiduals %>% plot #slight deviation
+anch %>% summary
+
+#Scomber australasicus
+mack <- glmmTMB(Scomber.australasicus ~ poly(CTDSST_degC,2,raw=FALSE) + GSLA +
+                    CTDChlaSurf_mgm3 + CTDSalinity_psu + Biomass_mgm3 +
+                    Oncaea.clevei + Paracalanus.indicus + Delibus.nudus +
+                    Parvocalanus.crassirostris + Euterpina.acutifrons +
+                    Clausocalanus.furcatus,
+                   family = nbinom1,
+                   offset = log(Volume_m3),
+                   data = data)
+
+mack %>% check_collinearity()
+mack %>% check_zeroinflation()
+mack %>% simulateResiduals %>% plot
+mack %>% summary
+
+#Lophonectes gallus
+der <- glmmTMB(Lophonectes.gallus ~ poly(CTDSST_degC,2,raw=TRUE) + GSLA +
+                    CTDChlaSurf_mgm3 + CTDSalinity_psu + Biomass_mgm3 +
+                    Oithona.atlantica + Oithona.plumifera + Clausocalanus.jobei +
+                    Paracalanus.indicus + Oncaea.venusta,
+                   family = nbinom1,
+                   offset = log(Volume_m3),
+                   data = data)
+
+der %>% check_collinearity()
+der %>% check_zeroinflation()
+der %>% simulateResiduals %>% plot
+der %>% summary
+
+#Sillago flindersi
+ting <- glmmTMB(Sillago.flindersi ~ poly(CTDSST_degC,2,raw=TRUE) + GSLA +
+                    CTDChlaSurf_mgm3 + CTDSalinity_psu + Biomass_mgm3 +
+                    Paracalanus.indicus + Microsetella.norvegica +
+                     Oncaea.media + Oithona.simplex + Oithona.plumifera,
+                   family = nbinom1,
+                   offset = log(Volume_m3),
+                   data = data)
+
+ting %>% check_collinearity()
+ting %>% check_zeroinflation()
+ting %>% simulateResiduals %>% plot
+ting %>% summary
+
+#Trachurus declivis
+jack <- glmmTMB(Trachurus.declivis ~ poly(CTDSST_degC,2,raw=TRUE) + GSLA +
+                    CTDChlaSurf_mgm3 + CTDSalinity_psu + Biomass_mgm3 +
+                    Paracalanus.indicus + Oithona.atlantica + Calanus.australis +
+                     Nannocalanus.minor + Farranula.rostrata,
+                   family = nbinom2,
+                   offset = log(Volume_m3),
+                   data = data)
+
+jack %>% check_collinearity()
+jack %>% check_zeroinflation()
+jack %>% simulateResiduals %>% plot
+jack %>% summary
+```
+
+```{r}
+# type III ANOVAs
+car::Anova(yak, type = "III")
+car::Anova(sar, type = "III")
+car::Anova(anch, type = "III")
+car::Anova(mack, type = "III")
+car::Anova(der, type = "III")
+car::Anova(ting, type = "III")
+car::Anova(jack, type = "III")
+```
+
+```{r}
+# partial effects plots
+
+#significant biological coefficients
+PIplotyak <- predict_response(yak, terms = "Paracalanus.indicus [all]")
+Bioplotsar <- predict_response(sar, terms = "Biomass_mgm3 [all]")
+PIplotsar <- predict_response(sar, terms = "Paracalanus.indicus [all]")
+EAplotsar <- predict_response(sar, terms = "Euterpina.acutifrons [all]")
+PIplotmack <- predict_response(mack, terms = "Paracalanus.indicus [all]")
+EAplotmack <- predict_response(mack, terms = "Euterpina.acutifrons [all]")
+PIplotjack <- predict_response(jack, terms = "Paracalanus.indicus [all]")
+NMplotjack <- predict_response(jack, terms = "Nannocalanus.minor [all]")
+
+PIyak <- ggplot(PIplotyak, aes(x = x, y = log(predicted))) +
+  geom_line() + 
+  geom_ribbon(aes(ymin = log(conf.low), ymax = log(conf.high)), fill = "#fde725",
+              alpha = 0.2) +
+  geom_rug(aes(x = x), sides = "b", length = unit(0.1, "npc")) +
+  labs(x = expression(italic("P. indicus") * " density (individuals/m3)"),
+       y = expression(italic("T. novaezelandiae") * " Abundance"),
+       title = "a)") +
+  scale_y_continuous(
+    breaks = function(predicted) c(min(predicted),
+                                                    max(predicted))) +
+  theme_minimal() +
+  theme(legend.position = "none")
+
+Biosar <- ggplot(Bioplotsar, aes(x = x, y = log(predicted))) +
+  geom_line() + 
+  geom_ribbon(aes(ymin = log(conf.low), ymax = log(conf.high)),
+              fill = "#35b779", alpha = 0.2) +
+  geom_rug(aes(x = x), sides = "b", length = unit(0.1, "npc")) +
+  labs(x = "Zooplankton biomass (g/m3)",
+       y = expression(italic("S. sagax") * " abundance"),
+       title = "b)") +
+  scale_y_continuous(
+    breaks = function(predicted) c(min(predicted),
+                                                    max(predicted))) +
+  theme_minimal() +
+  theme(legend.position = "none")
+
+PIsar <- ggplot(PIplotsar, aes(x = x, y = log(predicted))) +
+  geom_line() + 
+  geom_ribbon(aes(ymin = log(conf.low), ymax = log(conf.high)),
+              fill = "#35b779", alpha = 0.2) +
+  geom_rug(aes(x = x), sides = "b", length = unit(0.1, "npc")) +
+  labs(x = expression(italic("P. indicus") * " density (individuals/m3)"),
+       y = expression(italic("S. sagax") * " abundance"),
+       title = "c)") +
+  scale_y_continuous(
+    breaks = function(predicted) c(min(predicted),
+                                                    max(predicted))) +
+  theme_minimal() +
+  theme(legend.position = "none")
+
+EAsar <- ggplot(EAplotsar, aes(x = x, y = log(predicted))) +
+  geom_line() + 
+  geom_ribbon(aes(ymin = log(conf.low), ymax = log(conf.high)),
+              fill = "#35b779", alpha = 0.2) +
+  geom_rug(aes(x = x), sides = "b", length = unit(0.1, "npc")) +
+  labs(x = expression(italic("E. acutifrons") * " density (individuals/m3)"),
+       y = expression(italic("S. sagax") * " abundance"),
+       title = "d)") +
+  scale_y_continuous(
+    breaks = function(predicted) c(min(predicted),
+                                                    max(predicted))) +
+  theme_minimal() +
+  theme(legend.position = "none")
+
+PImack <- ggplot(PIplotmack, aes(x = x, y = log(predicted))) +
+  geom_line() + 
+  geom_ribbon(aes(ymin = log(conf.low), ymax = log(conf.high)),
+              fill = "#31688e", alpha = 0.2) +
+  geom_rug(aes(x = x), sides = "b", length = unit(0.1, "npc")) +
+  labs(x = expression(italic("P. indicus") * " density (individuals/m3)"),
+       y = expression(italic("S. australasicus") * " abundance"),
+       title = "e)") +
+  theme_minimal() +
+  theme(legend.position = "none")
+
+EAmack <- ggplot(EAplotmack, aes(x = x, y = log(predicted))) +
+  geom_line() + 
+  geom_ribbon(aes(ymin = log(conf.low), ymax = log(conf.high)),
+              fill = "#31688e", alpha = 0.2) +
+  geom_rug(aes(x = x), sides = "b", length = unit(0.1, "npc")) +
+  labs(x = expression(italic("E. acutifrons") * " density (individuals/m3)"),
+       y = expression(italic("S. australasicus") * " abundance"),
+       title = "f)") +
+  scale_y_continuous(
+    breaks = function(predicted) c(min(predicted),
+                                                    max(predicted))) +
+  theme_minimal() +
+  theme(legend.position = "none")
+
+PIjack <- ggplot(PIplotjack, aes(x = x, y = log(predicted))) +
+  geom_line() + 
+  geom_ribbon(aes(ymin = log(conf.low), ymax = log(conf.high)),
+              fill = "#440154", alpha = 0.2) +
+  geom_rug(aes(x = x), sides = "b", length = unit(0.1, "npc")) +
+  labs(x = expression(italic("P. indicus") * " density (individuals/m3)"),
+       y = expression(italic("T. declivis") * " abundance"),
+       title = "g)") +
+  scale_y_continuous(
+    breaks = function(predicted) c(min(predicted),
+                                                    max(predicted))) +
+  theme_minimal() +
+  theme(legend.position = "none")
+
+NMjack <- ggplot(NMplotjack, aes(x = x, y = log(predicted))) +
+  geom_line() + 
+  geom_ribbon(aes(ymin = log(conf.low), ymax = log(conf.high)),
+              fill = "#440154", alpha = 0.2) +
+  geom_rug(aes(x = x), sides = "b", length = unit(0.1, "npc")) +
+  labs(x = expression(italic("N. minor") * " density (individuals/m3)"),
+       y = expression(italic("T. declivis") * " abundance"),
+       title = "h)") +
+  scale_y_continuous(
+    breaks = function(predicted) c(min(predicted),
+                                                    max(predicted))) +
+  theme_minimal() +
+  theme(legend.position = "none")
+
+#combined biological plot
+(PIyak + Biosar) /
+  (PIsar + EAsar) /
+  (PImack + EAmack) /
+  (PIjack + NMjack)
+
+#significant abiotic coefficients
+
+#Trachurus novaezelandiae
+SSTplotyak <- predict_response(yak, terms = "CTDSST_degC [all]") %>% plot
+
+SSTplotyak +
+  plot_annotation(title = "Significant partial effects",
+                  subtitle = "Trachurus novaezelandiae") +
+  plot_layout(axes = "collect")
+
+#Sardinops sagax
+SSTplotsar <- predict_response(sar, terms = "CTDSST_degC [all]") %>% plot
+GSLAplotsar <- predict_response(sar, terms = "GSLA [all]") %>% plot
+Chlplotsar <- predict_response(sar, terms = "CTDChlaSurf_mgm3 [all]") %>% plot
+
+SSTplotsar + GSLAplotsar + Chlplotsar +
+  plot_annotation(title = "Significant partial effects",
+                  subtitle = "Sardinops sagax") +
+  plot_layout(axes = "collect")
+
+#anchovy
+SSTplotanch <- predict_response(anch, terms = "CTDSST_degC [all]") %>% plot
+Salplotanch <- predict_response(anch, terms = "CTDSalinity_psu [all]") %>% plot
+
+SSTplotanch + Salplotanch +
+  plot_annotation(title = "Significant partial effects",
+                  subtitle = "Engraulis australis") +
+  plot_layout(axes = "collect")
+
+#mackerel
+Salplotmack <- predict_response(mack, terms = "CTDSalinity_psu [all]") %>% plot
+PIplotmack <- predict_response(mack, terms = "Paracalanus.indicus [all]") %>% plot
+
+Salplotmack + 
+  plot_annotation(title = "Significant partial effects",
+                  subtitle = "Scomber australasicus") +
+  plot_layout(axes = "collect")
+
+#flounder
+SSTplotder <- predict_response(der, terms = "CTDSST_degC [all]") %>% plot
+
+SSTplotder +
+  plot_annotation(title = "Significant partial effects",
+                  subtitle = "Lophonectes gallus") +
+  plot_layout(axes = "collect")
+
+#whiting
+SSTplotting <- predict_response(ting, terms = "CTDSST_degC [all]") %>% plot
+Salplotting <- predict_response(ting, terms = "CTDSalinity_psu [all]") %>% plot
+
+SSTplotting + Salplotting +
+  plot_annotation(title = "Significant partial effects",
+                  subtitle = "Sillago flindersi") +
+  plot_layout(axes = "collect")
+
+#jack
+SSTplotjack <- predict_response(jack, terms = "CTDSST_degC [all]") %>% plot
+GSLAplotjack <- predict_response(jack, terms = "GSLA [all]") %>% plot
+Chlplotjack <- predict_response(jack, terms = "CTDChlaSurf_mgm3 [all]") %>% plot
+
+SSTplotjack + GSLAplotjack + Chlplotjack + 
+  plot_annotation(title = "Significant partial effects",
+                  subtitle = "Trachurus declivis") +
+  plot_layout(axes = "collect")
+```
+

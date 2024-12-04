@@ -14,7 +14,7 @@ library(tidygraph)
 library(dplyr)
 library(zoo)
 
-data <- read.csv("stdset.csv") %>%
+data <- read.csv("datasets/stdset.csv") %>%
   dplyr::select(where(~ !is.numeric(.) || is.numeric(.) &&
                  sum(., na.rm = T) > 0)) %>%
     mutate(across(where(is.numeric), ~ na.approx(.,
