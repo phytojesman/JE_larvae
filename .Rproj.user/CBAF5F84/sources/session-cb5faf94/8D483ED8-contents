@@ -40,7 +40,7 @@ mod <- manyany(formula = formula,
                
                var.power = 1.011)
 
-# GCGM
+# GCGM - WARNING, WILL 
 
 cgr <- cgr(mod, method = "AIC")
 
