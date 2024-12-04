@@ -1,0 +1,129 @@
+---
+title: "copula_ordinations"
+output: html_document
+date: "2024-11-26"
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r}
+# load packages and data
+
+library(tidyverse)
+library(zoo)
+library(scales)
+library(mvabund)
+library(tweedie)
+library(statmod)
+library(ecoCopula)
+
+data <- read.csv("stdset.csv") %>%
+  dplyr::select(where(~ !is.numeric(.) || is.numeric(.) &&
+                 sum(., na.rm = T) > 0)) %>%
+    mutate(across(where(is.numeric), ~ na.approx(.,
+                                               na.rm = F,
+                                               rule = 2)))
+
+# objects for larval fish and copepod ordinations
+
+meta <- data[1:11]
+fish.mv <- data[12:79] %>% mvabund()
+cope.mv <- data[80:235] %>% mvabund()
+```
+
+```{r}
+# run models
+
+fish.glm <- manyany(fish.mv ~ 1, fn = "glm",
+                     family = tweedie(var.power = 1.011, link.power = 0),
+                     var.power = 1.011)
+
+cope.glm <- manyany(cope.mv ~ 1, fn = "glm",
+                     family = tweedie(var.power = 1.011, link.power = 0),
+                     var.power = 1.011)
+
+# copula ordinations 
+
+fish.cord <- cord(fish.glm)
+cope.cord <- cord(cope.glm)
+```
+
+```{r}
+# plot
+# prepare objects
+
+fish.scores <- data.frame(fish.cord$scores)
+cope.scores <- data.frame(cope.cord$scores)
+
+fish.loadings <- data.frame(fish.cord$loadings)
+cope.loadings <- data.frame(cope.cord$loadings)
+
+fish.scores.meta <- fish.scores %>%
+  bind_cols(meta)
+cope.scores.meta <- cope.scores %>%
+  bind_cols(meta)
+
+fish.loadings.meta <- fish.loadings %>%
+  mutate(species = colnames(fish.mv))
+cope.loadings.meta <- cope.loadings %>%
+  mutate(species = colnames(cope.mv))
+
+# rescale loadings with scores
+
+fish.loadings.meta$Factor1 <- fish.loadings.meta$Factor1 %>%
+  rescale(to = c(min(fish.scores.meta$Factor1),
+                 max(fish.scores.meta$Factor1)-0.5))
+fish.loadings.meta$Factor2 <- fish.loadings.meta$Factor2 %>%
+  rescale(to = c(min(fish.scores.meta$Factor2),
+                 max(fish.scores.meta$Factor2)-0.5))
+
+cope.loadings.meta$Factor1 <- cope.loadings.meta$Factor1 %>%
+  rescale(to = c(min(cope.scores.meta$Factor1),
+                 max(cope.scores.meta$Factor1)-0.5))
+cope.loadings.meta$Factor2 <- cope.loadings.meta$Factor2 %>%
+  rescale(to = c(min(cope.scores.meta$Factor2),
+                 max(cope.scores.meta$Factor2)-0.5))
+
+# labels
+
+fish.loadings.select <- fish.loadings.meta[c(6, 9, 10, 15, 23, 37, 51, 62), ] %>% 
+  mutate(species = gsub("\\.", " ", species))
+
+cope.loadings.select <- cope.loadings.meta[c(7, 22, 43, 76, 93, 95,
+                                             98, 103, 125), ] %>% 
+  mutate(species = gsub("\\.", " ", species))
+
+
+# fish ordination
+
+ggplot(fish.scores.meta) +
+  geom_point(aes(x = Factor1, y = Factor2, colour = factor(StationCode))) +
+  scale_colour_manual(values = c("#541352FF", "#fde725", "#2f9aa0FF"),
+                      labels = c("Maria Island", "North Stradbroke Island",
+                                 "Port Hacking")) +
+  theme_classic() + 
+  geom_segment(data = fish.loadings.select, aes(x = 0, y = 0,
+                                  xend = Factor1, yend = Factor2,
+                                  )) +
+  geom_text(data=fish.loadings.select, aes(x= Factor1+0.22, y= Factor2+0.08,
+                                           label= paste0("italic('", species, "')")), parse = TRUE,
+            alpha=0.5, size=4) +
+  labs(title = "Larval fish copula ordination",
+       colour = "National Reference Station")
+
+# copepod ordination
+
+ggplot(cope.scores.meta) +
+  geom_point(aes(x = Factor1, y = Factor2, colour = factor(StationCode))) +
+  scale_colour_manual(values = c("#541352FF", "#FDE725FF", "#2f9aa0FF"),
+                      labels = c("Maria Island", "North Stradbroke Island",
+                                 "Port Hacking")) +
+  theme_classic() + 
+  geom_segment(data = cope.loadings.select, aes(x = 0, y = 0,
+                                  xend = Factor1, yend = Factor2,
+                                  )) +
+  geom_text(data=cope.loadings.select, aes(x= Factor1, y= Factor2+0.06, label= paste0("italic('", species, "')")), parse = TRUE,, alpha=0.5, size=4) +
+  labs(title = "Copepod copula ordination",
+       colour = "National Reference Station")
+```
+

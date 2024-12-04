@@ -1,0 +1,117 @@
+---
+title: "g_c_g_m_"
+output: html_document
+date: "2024-11-26"
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r}
+# load packages and data
+library(ggraph)
+library(igraph)
+library(tidygraph)
+library(dplyr)
+library(zoo)
+
+data <- read.csv("stdset.csv") %>%
+  dplyr::select(where(~ !is.numeric(.) || is.numeric(.) &&
+                 sum(., na.rm = T) > 0)) %>%
+    mutate(across(where(is.numeric), ~ na.approx(.,
+                                               na.rm = F,
+                                               rule = 2)))
+```
+
+```{r}
+# base GLM & GCGM
+library(mvabund)
+library(ecoCopula)
+
+meta <- data[1:9]
+bio_resp <- data[12:235] %>% mvabund()
+
+formula = formula(bio_resp ~
+                    meta$StationCode + meta$CTDSST_degC)
+
+mod <- manyany(formula = formula,
+               data = meta,
+               fn = "glm", family = tweedie(var.power = 1.011,
+                                            link.power = 0),
+               
+               var.power = 1.011)
+
+# GCGM
+
+cgr <- cgr(mod, method = "AIC")
+
+# base igraph
+ig <- cgr$best_graph$igraph_out
+
+# remove isolated nodes
+V(ig)$isolated <- degree(ig) == 0
+```
+
+```{r}
+# full network
+labels <- V(ig)$name[degree(ig) > 0] %>% na.exclude()
+fish_nodes <- labels[1:23]
+cope_nodes <- labels[24:62]
+
+fullgraph <- induced_subgraph(ig, vids = labels)
+V(fullgraph)$degree <- degree(fullgraph)
+
+fullg_plot <- data.frame(
+  name = V(fullgraph)$name,
+  group = ifelse(V(fullgraph)$name %in% fish_nodes, "Larval fish",
+                 ifelse(V(fullgraph)$name %in% cope_nodes, "Copepod", "Other"))
+)
+
+fullgraph_tbl <- as_tbl_graph(fullgraph) %>%
+  activate(nodes) %>%
+  left_join(fullg_plot, by = "name")
+
+# Plot full network
+ggraph(fullgraph_tbl, layout = "fr") +
+  geom_edge_fan(aes(width = partcor, colour = partcor)) +
+  scale_edge_width(range = c(0.2, 2)) +
+  scale_edge_color_gradient2(low = "darkred", mid = "cornsilk2", high = "deepskyblue4", midpoint = 0) +
+  geom_node_point(aes(colour = group, size = degree)) +
+  geom_node_text(aes(label = name, size = degree), repel = TRUE, vjust = 1.7) +
+  scale_size_continuous(range = c(3, 5)) +
+  scale_color_manual(values = c("Larval fish" = "aquamarine4", "Copepod" = "coral", "Other" = "gray")) +
+  theme_void() +
+  theme(legend.position = 'none')
+```
+
+```{r}
+# connected graph only
+ic_fish_nodes <- c("Trachurus.novaezelandiae", "Engraulis.australis", "Sardinops.sagax", "Scomber.australasicus")
+ic_cope_nodes <- c("Acartia.tranteri", "Clausocalanus.furcatus", "Diothonia.rigida", "Euterpina.acutifrons",
+                   "Microsetella.norvegica", "Oithona.atlantica", "Paracalanus.indicus", "Temora.turbinata")
+
+subgraph <- induced_subgraph(ig, vids = intersect(c(ic_fish_nodes, ic_cope_nodes), V(ig)$name))
+V(subgraph)$degree <- degree(subgraph)
+
+subg_plot <- data.frame(
+  name = V(subgraph)$name,
+  group = ifelse(V(subgraph)$name %in% ic_fish_nodes, "Larval fish",
+                 ifelse(V(subgraph)$name %in% ic_cope_nodes, "Copepod", "Other"))
+)
+
+subgraph_tbl <- as_tbl_graph(subgraph) %>%
+  activate(nodes) %>%
+  left_join(subg_plot, by = "name")
+
+# Plot subset network
+ggraph(subgraph_tbl, layout = "fr") +
+  geom_edge_fan(aes(width = partcor, colour = partcor)) +
+  scale_edge_width(range = c(0.2, 2)) +
+  scale_edge_color_gradient2(low = "darkred", mid = "cornsilk2", high = "deepskyblue4", midpoint = 0) +
+  geom_node_point(aes(colour = group, size = degree)) +
+  geom_node_text(aes(label = name, size = degree), repel = TRUE, vjust = 1.7) +
+  scale_size_continuous(range = c(3, 5)) +
+  scale_color_manual(values = c("Larval fish" = "aquamarine4", "Copepod" = "coral", "Other" = "gray")) +
+  theme_void() +
+  theme(legend.position = 'none')
+```
+
