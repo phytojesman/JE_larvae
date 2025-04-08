@@ -1,8 +1,8 @@
-# JE_hons_for_LO
+# JE_larvae
 
 welcome to the repository for this project!
 2 datasets are required for reproduction of the main analyses.
-these are contained in JE_hons_for_LO/datasets
+these are contained in JE_larvae/datasets
 
 'stdset.csv' are the combined larval fish and copepod abundance data, standardised to density (individuals/m^3).
 'set.csv' are the combined larval fish and copepod abundance data, untransformed. Larval fish abundance is recorded in individuals, copepod abundance is recorded in individuals/m^3. 
@@ -12,7 +12,7 @@ these are contained in JE_hons_for_LO/datasets
 'set.csv' is used for post-hoc modelling. Integer response data are appropriate for the models specified, although standardised data are not invalid for this approach. 
 
 3 code files correspond to the 3 main analysis workflows.
-these are contained in JE_hons_for_LO/code
+these are contained in JE_larvae/code
 
 
 'copula_ordinations.Rmd' contains the code necessary to reproduce copula latent variable ordinations for both larval fish and copepod communities.
