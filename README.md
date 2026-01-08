@@ -13,6 +13,7 @@ these are contained in JE_larvae/datasets
 
 3 code files correspond to the 3 main analysis workflows.
 these are contained in JE_larvae/code
+An additional code file is included to reproduce the map figure (Figure 2).
 
 
 'copula_ordinations.Rmd' contains the code necessary to reproduce copula latent variable ordinations for both larval fish and copepod communities.
@@ -20,5 +21,5 @@ these are contained in JE_larvae/code
 'envmodels.Rmd' contains the code necessary to reproduce the generalised linear models used to assess significance of copepod species density variables. 
 'envmodels.Rmd' also contains the code necessary to perform type III ANOVA required to assess the contribution of each variable to the explanation of variance in the response.
 'envmodels.Rmd' also contains the code necessary to produce partial effects plots.
-
+'fishmap.Rmd' contains the code necessary to reproduce the map figure.
  
