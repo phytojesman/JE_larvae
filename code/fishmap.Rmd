@@ -1,0 +1,81 @@
+---
+title: "fishmap"
+output: html_document
+date: "2026-01-08"
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r}
+#Load packages
+library(sf)
+library(rnaturalearth)
+library(rnaturalearthdata)
+library(ggrepel)
+library(devtools)
+
+#Download basemap repo
+devtools::install_github("ropensci/rnaturalearthhires")
+```
+
+```{r}
+#Base data
+australia <- ne_states(country = 'australia', returnclass = "sf")
+
+nrs <- data.frame(lat=c(-34.11923, -27.345, -42.59667),
+                  lon = c(151.22667, 153.562, 148.23333),
+                  name=c("Port Hacking", "North Stradbroke Island", "Maria Island"),
+                  code = c("PHB", "NSI", "MAI"))
+```
+
+```{r}
+#Plot images
+  #Underlay
+studyarea<- ggplot() +
+  geom_sf(data=australia, col="black", fill = "grey65", inherit.aes = FALSE, size=0.2)+
+  geom_point(data=nrs, aes(x = lon, y = lat), inherit.aes = FALSE, col= "red", size = 3)+
+  geom_label_repel(data=nrs, aes(x = lon, y = lat,label=name), alpha=0.9, size = 5,
+                   direction = "y", nudge_x = -1, hjust = 1,
+                   segment.color = NA)+
+  coord_sf(xlim = c(140, 168), ylim = c(-45, -25))+ 
+  theme_bw() +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.border = element_rect(colour = "black", fill = NA, linewidth = 1), 
+        axis.text.x = element_text(size = 10, colour = "black"),
+        axis.text.y = element_text(size = 10, colour = "black"), 
+        axis.title.x = element_text(size = 10, face = "bold"),
+        axis.title.y = element_text(size = 10, face = "bold"),
+        panel.background = element_rect(fill="white"),
+        axis.ticks = element_line(colour = "black", linewidth = 1)) +
+  labs(x = "Longitude", y = "Latitude")
+
+  #Inset
+pol<-data.frame(xmin=140,xmax=155 ,ymin=-45 ,ymax=-24)
+
+inset <- ggplot()+
+  geom_sf(data=australia, col="black", fill = "grey65", inherit.aes = FALSE, size=0.2) +
+  coord_sf(xlim = c(112, 160), ylim = c(-46, -10))+theme_bw()+labs(x=NULL,y=NULL) + 
+  #scale_x_continuous(breaks=seq(117.5,125, 2.5), labels=c(paste(seq(117.5,125, 2.5),"°E", sep="")))+
+  #scale_y_continuous(breaks=seq(5,20, 5), labels=c(paste(seq(5,20, 5),"°N", sep="")))+
+  geom_rect(data = pol, aes(xmin = xmin, xmax = xmax, ymin = ymin, ymax = ymax), alpha=0, colour="red", linewidth = 1, linetype=1)+
+  theme_bw() +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.border = element_rect(colour = "black"),
+    axis.text.x =element_blank(),axis.text.y= element_blank(), axis.ticks=element_blank(),axis.title.x =element_blank(),
+        axis.title.y= element_blank(), plot.background = element_rect(fill = "transparent", color = NA)
+  )
+```
+
+```{r}
+#Save to device
+library(grid)
+
+png(file="fishmap.png",w=3600,h=3600, res=600)
+grid.newpage()
+v1<-viewport(width = 1, height = 1, x = 0.5, y = 0.5) #plot area for the main map
+v2<-viewport(width = 0.3, height = 0.35, x = 0.849, y = 0.263, clip = "off") #plot area for the inset map; note you may need to tweak these depending on device specs/settings
+print(studyarea,vp=v1) 
+print(inset,vp=v2)
+dev.off()
+```
+
