@@ -12,7 +12,7 @@ these are contained in JE_larvae/datasets
 'set.csv' is used for post-hoc modelling. Integer response data are appropriate for the models specified, although standardised data are not invalid for this approach. 
 
 3 code files correspond to the 3 main analysis workflows.
-these are contained in JE_larvae/code
+these are contained in JE_larvae/code.
 An additional code file is included to reproduce the map figure (Figure 2).
 
 
