@@ -50,7 +50,8 @@ sar <- glmmTMB(Sardinops.sagax ~ poly(CTDSST_degC,2,raw=TRUE) + GSLA +
                     Ctenocalanus.vanus + Microsetella.rosea +
                     Microsetella.norvegica + Temora.turbinata +
                     Paracalanus.indicus + Acartia.tranteri +
-                    Clausocalanus.furcatus + Euterpina.acutifrons,
+                    Clausocalanus.furcatus + Euterpina.acutifrons +
+                 Dioithona.rigida,
                    family = nbinom2,
                    offset = log(Volume_m3),
                    data = data)
@@ -163,7 +164,7 @@ PIyak <- ggplot(PIplotyak, aes(x = x, y = log(predicted))) +
   geom_ribbon(aes(ymin = log(conf.low), ymax = log(conf.high)), fill = "#fde725",
               alpha = 0.2) +
   geom_rug(aes(x = x), sides = "b", length = unit(0.1, "npc")) +
-  labs(x = expression(italic("P. indicus") * " density (individuals/m3)"),
+  labs(x = expression(italic("P. indicus") * " density (individuals/m"^3*")"),
        y = expression(italic("T. novaezelandiae") * " Abundance"),
        title = "a)") +
   scale_y_continuous(
@@ -172,12 +173,12 @@ PIyak <- ggplot(PIplotyak, aes(x = x, y = log(predicted))) +
   theme_minimal() +
   theme(legend.position = "none")
 
-Biosar <- ggplot(Bioplotsar, aes(x = x, y = log(predicted))) +
+DRsar <- ggplot(DRplotsar, aes(x = x, y = log(predicted))) +
   geom_line() + 
   geom_ribbon(aes(ymin = log(conf.low), ymax = log(conf.high)),
               fill = "#35b779", alpha = 0.2) +
   geom_rug(aes(x = x), sides = "b", length = unit(0.1, "npc")) +
-  labs(x = "Zooplankton biomass (g/m3)",
+  labs(x = expression(italic("D. rigida") * " density (individuals/m"^3*")"),
        y = expression(italic("S. sagax") * " abundance"),
        title = "b)") +
   scale_y_continuous(
@@ -191,7 +192,7 @@ PIsar <- ggplot(PIplotsar, aes(x = x, y = log(predicted))) +
   geom_ribbon(aes(ymin = log(conf.low), ymax = log(conf.high)),
               fill = "#35b779", alpha = 0.2) +
   geom_rug(aes(x = x), sides = "b", length = unit(0.1, "npc")) +
-  labs(x = expression(italic("P. indicus") * " density (individuals/m3)"),
+  labs(x = expression(italic("P. indicus") * " density (individuals/m"^3*")"),
        y = expression(italic("S. sagax") * " abundance"),
        title = "c)") +
   scale_y_continuous(
@@ -205,7 +206,7 @@ EAsar <- ggplot(EAplotsar, aes(x = x, y = log(predicted))) +
   geom_ribbon(aes(ymin = log(conf.low), ymax = log(conf.high)),
               fill = "#35b779", alpha = 0.2) +
   geom_rug(aes(x = x), sides = "b", length = unit(0.1, "npc")) +
-  labs(x = expression(italic("E. acutifrons") * " density (individuals/m3)"),
+  labs(x = expression(italic("E. acutifrons") * " density (individuals/m"^3*")"),
        y = expression(italic("S. sagax") * " abundance"),
        title = "d)") +
   scale_y_continuous(
@@ -219,7 +220,7 @@ PImack <- ggplot(PIplotmack, aes(x = x, y = log(predicted))) +
   geom_ribbon(aes(ymin = log(conf.low), ymax = log(conf.high)),
               fill = "#31688e", alpha = 0.2) +
   geom_rug(aes(x = x), sides = "b", length = unit(0.1, "npc")) +
-  labs(x = expression(italic("P. indicus") * " density (individuals/m3)"),
+  labs(x = expression(italic("P. indicus") * " density (individuals/m"^3*")"),
        y = expression(italic("S. australasicus") * " abundance"),
        title = "e)") +
   theme_minimal() +
@@ -230,7 +231,7 @@ EAmack <- ggplot(EAplotmack, aes(x = x, y = log(predicted))) +
   geom_ribbon(aes(ymin = log(conf.low), ymax = log(conf.high)),
               fill = "#31688e", alpha = 0.2) +
   geom_rug(aes(x = x), sides = "b", length = unit(0.1, "npc")) +
-  labs(x = expression(italic("E. acutifrons") * " density (individuals/m3)"),
+  labs(x = expression(italic("E. acutifrons") * " density (individuals/m"^3*")"),
        y = expression(italic("S. australasicus") * " abundance"),
        title = "f)") +
   scale_y_continuous(
@@ -244,7 +245,7 @@ PIjack <- ggplot(PIplotjack, aes(x = x, y = log(predicted))) +
   geom_ribbon(aes(ymin = log(conf.low), ymax = log(conf.high)),
               fill = "#440154", alpha = 0.2) +
   geom_rug(aes(x = x), sides = "b", length = unit(0.1, "npc")) +
-  labs(x = expression(italic("P. indicus") * " density (individuals/m3)"),
+  labs(x = expression(italic("P. indicus") * " density (individuals/m"^3*")"),
        y = expression(italic("T. declivis") * " abundance"),
        title = "g)") +
   scale_y_continuous(
@@ -258,7 +259,7 @@ NMjack <- ggplot(NMplotjack, aes(x = x, y = log(predicted))) +
   geom_ribbon(aes(ymin = log(conf.low), ymax = log(conf.high)),
               fill = "#440154", alpha = 0.2) +
   geom_rug(aes(x = x), sides = "b", length = unit(0.1, "npc")) +
-  labs(x = expression(italic("N. minor") * " density (individuals/m3)"),
+  labs(x = expression(italic("N. minor") * " density (individuals/m"^3*")"),
        y = expression(italic("T. declivis") * " abundance"),
        title = "h)") +
   scale_y_continuous(
@@ -268,7 +269,7 @@ NMjack <- ggplot(NMplotjack, aes(x = x, y = log(predicted))) +
   theme(legend.position = "none")
 
 #combined biological plot
-(PIyak + Biosar) /
+(PIyak + DRsar) /
   (PIsar + EAsar) /
   (PImack + EAmack) /
   (PIjack + NMjack)
